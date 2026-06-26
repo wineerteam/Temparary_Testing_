@@ -1,2 +1,2 @@
 # SkyGPT
-A MERN based ChatGPT replica implemented from scratch using OpenAI (test free vesrion gemini_api).
+A MERN-based ChatGPT replica built with React, Node.js, Express, and MongoDB.
