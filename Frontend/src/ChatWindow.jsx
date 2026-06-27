@@ -3,9 +3,11 @@ import Chat from "./Chat.jsx";
 import { MyContext } from "./MyContext.jsx";
 import { useContext, useState, useEffect } from "react";
 import { ScaleLoader } from "react-spinners";
+import { useAuth } from "./auth/AuthProvider.jsx";
 
 function ChatWindow() {
     const { prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat } = useContext(MyContext);
+    const { logout, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -20,6 +22,7 @@ function ChatWindow() {
             headers: {
                 "Content-Type": "application/json"
             },
+            credentials: "include",
             body: JSON.stringify({
                 message: prompt,
                 threadId: currThreadId
@@ -64,15 +67,22 @@ function ChatWindow() {
             <div className="navbar">
                 <span>SkyGPT <i className="fa-solid fa-chevron-down"></i></span>
                 <div className="userIconDiv" onClick={handleProfileClick}>
-                    <span className="userIcon"><i className="fa-solid fa-user"></i></span>
+                    {user?.avatar ? (
+                        <img src={user.avatar} alt="avatar" style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                        <span className="userIcon"><i className="fa-solid fa-user"></i></span>
+                    )}
                 </div>
             </div>
             {
                 isOpen &&
                 <div className="dropDown">
+                    <div style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", fontSize: "12px", color: "#a0aec0", wordBreak: "break-all" }}>
+                        Signed in as <strong style={{ color: "#fff" }}>{user?.username || user?.email}</strong>
+                    </div>
                     <div className="dropDownItem" onClick={() => { alert('Settings: Feature coming soon!'); setIsOpen(false); }}><i className="fa-solid fa-gear"></i> Settings</div>
                     <div className="dropDownItem" onClick={() => { alert('Upgrade Plan: Feature coming soon!'); setIsOpen(false); }}><i className="fa-solid fa-cloud-arrow-up"></i> Upgrade plan</div>
-                    <div className="dropDownItem" onClick={() => { alert('Logged out successfully!'); setIsOpen(false); }}><i className="fa-solid fa-arrow-right-from-bracket"></i> Log out</div>
+                    <div className="dropDownItem" onClick={async () => { await logout(); setIsOpen(false); }}><i className="fa-solid fa-arrow-right-from-bracket"></i> Log out</div>
                 </div>
             }
             <Chat></Chat>
