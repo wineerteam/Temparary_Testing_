@@ -12,6 +12,7 @@ import { protect } from "./auth/middlewares/authMiddleware.js";
 import { authLimiter, xssClean, mongoSanitizer } from "./auth/middlewares/security.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 8080;
 
 app.use(helmet());
