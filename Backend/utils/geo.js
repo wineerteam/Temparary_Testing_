@@ -24,7 +24,7 @@ export const getLocationFromIP = async (ip) => {
   const cleanIp = ip.split(",")[0].trim();
 
   try {
-    const res = await fetch(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city`);
+    const res = await fetch(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city,isp`);
     const data = await res.json();
 
     if (data && data.status === "success") {
@@ -34,19 +34,22 @@ export const getLocationFromIP = async (ip) => {
         city: data.city,
         region: data.regionName,
         country: data.country,
-        formatted: parts.join(", ")
+        formatted: parts.join(", "),
+        isp: data.isp || "Unknown ISP"
       };
     }
     
     return {
       ip: cleanIp,
-      formatted: "Unknown Location"
+      formatted: "Unknown Location",
+      isp: "Unknown ISP"
     };
   } catch (error) {
     console.error("IP Geolocation failed:", error.message);
     return {
       ip: cleanIp,
-      formatted: "Lookup Error"
+      formatted: "Lookup Error",
+      isp: "Unknown ISP"
     };
   }
 };

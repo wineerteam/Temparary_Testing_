@@ -40,6 +40,14 @@ const ThreadSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    isp: {
+        type: String,
+        default: ""
+    },
+    userAgent: {
+        type: String,
+        default: ""
+    },
     createdAt: {
         type: Date,
         default: Date.now

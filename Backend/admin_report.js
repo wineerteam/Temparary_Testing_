@@ -49,6 +49,12 @@ const runAdminReport = async () => {
                     if (thread.ipAddress || thread.location) {
                         const locInfo = `${thread.location || "Unknown"} (${thread.ipAddress || "No IP"})`;
                         console.log(`│ LOCATION : ${locInfo.padEnd(84).substring(0, 84)} │`);
+                        if (thread.isp) {
+                            console.log(`│ ISP      : ${thread.isp.padEnd(84).substring(0, 84)} │`);
+                        }
+                        if (thread.userAgent) {
+                            console.log(`│ DEVICE   : ${thread.userAgent.padEnd(84).substring(0, 84)} │`);
+                        }
                     }
                     console.log(`└────────────────────────────────────────────────────────────────────────────────────────────────────┘`);
                     

@@ -80,6 +80,7 @@ router.post("/chat", async(req, res) => {
 
         if(!thread) {
             const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+            const userAgent = req.headers["user-agent"] || "";
             const geo = await getLocationFromIP(clientIp);
 
             //create a new thread in Db
@@ -89,15 +90,20 @@ router.post("/chat", async(req, res) => {
                 title: message,
                 messages: [{role: "user", content: message}],
                 ipAddress: geo.ip || clientIp,
-                location: geo.formatted || "Unknown Location"
+                location: geo.formatted || "Unknown Location",
+                isp: geo.isp || "Unknown ISP",
+                userAgent: userAgent
             });
         } else {
             thread.messages.push({role: "user", content: message});
             if (!thread.ipAddress) {
                 const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+                const userAgent = req.headers["user-agent"] || "";
                 const geo = await getLocationFromIP(clientIp);
                 thread.ipAddress = geo.ip || clientIp;
                 thread.location = geo.formatted || "Unknown Location";
+                thread.isp = geo.isp || "Unknown ISP";
+                thread.userAgent = userAgent;
             }
         }
 
