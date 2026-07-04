@@ -32,6 +32,14 @@ const ThreadSchema = new mongoose.Schema({
         default: "New Chat"
     },
     messages: [MessageSchema],
+    ipAddress: {
+        type: String,
+        default: ""
+    },
+    location: {
+        type: String,
+        default: ""
+    },
     createdAt: {
         type: Date,
         default: Date.now

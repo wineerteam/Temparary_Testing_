@@ -46,6 +46,10 @@ const runAdminReport = async () => {
                     console.log(`┌────────────────────────────────────────────────────────────────────────────────────────────────────┐`);
                     console.log(`│ CHAT #${String(index + 1).padEnd(3)} : "${thread.title.padEnd(76).substring(0, 76)}" │`);
                     console.log(`│ UPDATED  : ${new Date(thread.updatedAt).toLocaleString().padEnd(84)} │`);
+                    if (thread.ipAddress || thread.location) {
+                        const locInfo = `${thread.location || "Unknown"} (${thread.ipAddress || "No IP"})`;
+                        console.log(`│ LOCATION : ${locInfo.padEnd(84).substring(0, 84)} │`);
+                    }
                     console.log(`└────────────────────────────────────────────────────────────────────────────────────────────────────┘`);
                     
                     thread.messages.forEach(msg => {
@@ -77,9 +81,9 @@ const runAdminReport = async () => {
                 process.exit(0);
             }
 
-            console.log("┌──────┬──────────────────────┬──────────────────────────────────┬──────────────────────────────────────────┐");
-            console.log("│ S.No │ Date & Time          │ User / Email                     │ Search Query / Topic                     │");
-            console.log("├──────┼──────────────────────┼──────────────────────────────────┼──────────────────────────────────────────┤");
+            console.log("┌──────┬──────────────────────┬────────────────────────────┬──────────────────────────────┬────────────────────────────────┐");
+            console.log("│ S.No │ Date & Time          │ User / Email               │ Search Query / Topic         │ Location & IP                  │");
+            console.log("├──────┼──────────────────────┼────────────────────────────┼──────────────────────────────┼────────────────────────────────┤");
 
             recentThreads.forEach((thread, index) => {
                 const user = thread.userId || { username: 'Unknown User', email: 'N/A' };
@@ -87,20 +91,18 @@ const runAdminReport = async () => {
                 const timeStr = new Date(thread.updatedAt).toLocaleString();
                 const titleStr = thread.title;
 
-                // Format values to fit the table widths:
-                // S.No: 4 chars
-                // Date & Time: 20 chars
-                // User / Email: 32 chars
-                // Search Query / Topic: 40 chars
+                // Format values to fit the table widths
                 const indexPadded = String(index + 1).padEnd(4).substring(0, 4);
                 const timePadded = timeStr.padEnd(20).substring(0, 20);
-                const userPadded = userStr.padEnd(32).substring(0, 32);
-                const titlePadded = titleStr.padEnd(40).substring(0, 40);
+                const userPadded = userStr.padEnd(28).substring(0, 28);
+                const titlePadded = titleStr.padEnd(30).substring(0, 30);
+                const locStr = thread.location ? `${thread.location} (${thread.ipAddress})` : "Unknown";
+                const locPadded = locStr.padEnd(30).substring(0, 30);
 
-                console.log(`│ ${indexPadded} │ ${timePadded} │ ${userPadded} │ ${titlePadded} │`);
+                console.log(`│ ${indexPadded} │ ${timePadded} │ ${userPadded} │ ${titlePadded} │ ${locPadded} │`);
             });
 
-            console.log("└──────┴──────────────────────┴──────────────────────────────────┴──────────────────────────────────────────┘\n");
+            console.log("└──────┴──────────────────────┴────────────────────────────┴──────────────────────────────┴────────────────────────────────┘\n");
             console.log("💡 Tip: To see full chat details for a user, run: node admin_report.js <email-or-username>");
         }
 

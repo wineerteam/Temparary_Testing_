@@ -1,6 +1,7 @@
 import express from "express";
 import Thread from "../models/Thread.js";
 import getGeminiAPIResponse from "../utils/gemini.js";
+import { getLocationFromIP } from "../utils/geo.js";
 
 const router = express.Router();
 
@@ -78,15 +79,26 @@ router.post("/chat", async(req, res) => {
         let thread = await Thread.findOne({threadId, userId: req.user.id});
 
         if(!thread) {
+            const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+            const geo = await getLocationFromIP(clientIp);
+
             //create a new thread in Db
             thread = new Thread({
                 threadId,
                 userId: req.user.id,
                 title: message,
-                messages: [{role: "user", content: message}]
+                messages: [{role: "user", content: message}],
+                ipAddress: geo.ip || clientIp,
+                location: geo.formatted || "Unknown Location"
             });
         } else {
             thread.messages.push({role: "user", content: message});
+            if (!thread.ipAddress) {
+                const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+                const geo = await getLocationFromIP(clientIp);
+                thread.ipAddress = geo.ip || clientIp;
+                thread.location = geo.formatted || "Unknown Location";
+            }
         }
 
         const assistantReply = await getGeminiAPIResponse(message);
