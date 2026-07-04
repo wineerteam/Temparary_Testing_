@@ -9,6 +9,7 @@ import {
 } from "../utils/tokenUtils.js";
 import { handleGoogleAuth, handleGithubAuth } from "../services/authService.js";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../../utils/emailService.js";
 
 // Helper to set HttpOnly cookies
 const setTokenCookies = (res, accessToken, refreshToken) => {
@@ -201,10 +202,10 @@ export const forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: email.toLowerCase(), provider: "local" });
     if (!user) {
-      // For security, return success even if user not found, but we can also mock link returning
+      // For security, return success even if user not found
       return res.json({
         success: true,
-        message: "If the email is registered, a password reset link has been generated.",
+        message: "If the email is registered, a password reset link has been sent.",
       });
     }
 
@@ -215,16 +216,44 @@ export const forgotPassword = async (req, res) => {
       { expiresIn: "15m" }
     );
 
-    // Mock sending email - return the token in response for manual reset testing/flow
     const resetUrl = `${authConfig.frontendUrl}/reset-password?token=${resetToken}`;
-    console.log(`Password reset link: ${resetUrl}`);
+    
+    // HTML email template
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #7c3aed; text-align: center;">Reset Your SkyGPT Password</h2>
+        <p>Hello,</p>
+        <p>We received a request to reset the password for your SkyGPT account. Click the button below to choose a new password. This link is valid for 15 minutes.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+        </div>
+        <p>If the button doesn't work, copy and paste this URL into your browser:</p>
+        <p style="word-break: break-all; color: #64748b; font-size: 14px;">${resetUrl}</p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center;">If you did not request a password reset, you can safely ignore this email.</p>
+      </div>
+    `;
 
-    return res.json({
-      success: true,
-      message: "Password reset link generated successfully.",
-      resetToken, // Returned for testing / client redirection
-      resetUrl,
+    // Send the email
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: "Reset Your SkyGPT Password",
+      html: emailHtml,
     });
+
+    const responsePayload = {
+      success: true,
+      message: "Password reset link has been sent to your email.",
+    };
+
+    // If Ethereal test mail was used, include the preview URL in the response for easy developer testing
+    if (emailResult && emailResult.previewUrl) {
+      responsePayload.previewUrl = emailResult.previewUrl;
+      responsePayload.resetUrl = resetUrl;
+      responsePayload.resetToken = resetToken;
+    }
+
+    return res.json(responsePayload);
   } catch (error) {
     console.error("Forgot Password Error:", error);
     return res.status(500).json({ error: "Server error processing request" });

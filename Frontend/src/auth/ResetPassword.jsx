@@ -58,7 +58,7 @@ const ResetPassword = () => {
       <div style={styles.card}>
         <div style={styles.header}>
           <img
-            src="/src/assets/blacklogo.png"
+            src="/blacklogo.png"
             alt="SkyGPT Logo"
             style={styles.logo}
             onError={(e) => {

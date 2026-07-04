@@ -6,7 +6,7 @@ import { ScaleLoader } from "react-spinners";
 import { useAuth } from "./auth/AuthProvider.jsx";
 
 function ChatWindow() {
-    const { prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat } = useContext(MyContext);
+    const { prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat, isSidebarOpen, setIsSidebarOpen } = useContext(MyContext);
     const { logout, user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +65,12 @@ function ChatWindow() {
     return (
         <div className="chatWindow">
             <div className="navbar">
-                <span>SkyGPT <i className="fa-solid fa-chevron-down"></i></span>
+                <div className="navbar-left">
+                    <button className="menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                        <i className="fa-solid fa-bars"></i>
+                    </button>
+                    <span>SkyGPT <i className="fa-solid fa-chevron-down"></i></span>
+                </div>
                 <div className="userIconDiv" onClick={handleProfileClick}>
                     {user?.avatar ? (
                         <img src={user.avatar} alt="avatar" style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }} />

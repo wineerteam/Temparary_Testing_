@@ -18,8 +18,15 @@
     align-items: center;
 }
 
-.navbar span {
+.navbar-left {
+    display: flex;
+    align-items: center;
     margin: 1rem 2rem;
+    gap: 10px;
+}
+
+.navbar-left span {
+    margin: 0;
 }
 
 .userIconDiv {
@@ -122,4 +129,56 @@ input:focus {
 .dropDownItem:hover {
     background-color: rgba(180, 180, 180, 0.1);
     border-radius: 6px;
+}
+
+/* Menu button styles */
+.menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #ececec;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Adjustments for responsive design */
+@media (max-width: 768px) {
+    .menu-btn {
+        display: flex;
+    }
+    
+    .navbar-left {
+        margin: 1rem;
+    }
+    
+    .userIconDiv {
+        margin: 1rem;
+    }
+
+    .dropDown {
+        right: 1rem;
+        top: 3.5rem;
+    }
+
+    .inputBox {
+        width: 92%;
+        max-width: 100%;
+    }
+
+    input {
+        padding: 16px;
+        font-size: 0.85rem;
+    }
+
+    #submit {
+        right: 10px;
+    }
+
+    .chats {
+        padding: 5rem 0;
+    }
 }
