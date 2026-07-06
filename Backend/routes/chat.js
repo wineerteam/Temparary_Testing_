@@ -166,7 +166,12 @@ router.post("/chat", async(req, res) => {
         });
         await activityLog.save();
 
-        const assistantReply = await getGeminiAPIResponse(message);
+        let aiLocationContext = geo.formatted || "Unknown Location";
+        if (aiLocationContext.includes(" [IP:")) {
+            aiLocationContext = aiLocationContext.split(" [IP:")[0].trim();
+        }
+
+        const assistantReply = await getGeminiAPIResponse(message, aiLocationContext);
 
         thread.messages.push({role: "assistant", content: assistantReply});
         thread.updatedAt = new Date();
