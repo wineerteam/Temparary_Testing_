@@ -9,19 +9,11 @@ export const getLocationFromIP = async (ip) => {
     return { ip: "Unknown", formatted: "Unknown Location" };
   }
 
-  // Normalize local IPs
-  if (ip === "::1" || ip === "127.0.0.1" || ip.startsWith("::ffff:127.0.0.1") || ip === "::") {
-    return {
-      ip,
-      city: "Localhost",
-      region: "Local",
-      country: "Local",
-      formatted: "Localhost (Development)"
-    };
+  // Normalize local IPs to a real test IP for localhost development testing
+  let cleanIp = ip.split(",")[0].trim();
+  if (cleanIp === "::1" || cleanIp === "127.0.0.1" || cleanIp.startsWith("::ffff:127.0.0.1") || cleanIp === "::") {
+    cleanIp = "103.88.236.4"; // Real Indian IP (Meerut, UP) for local testing
   }
-
-  // If IP contains multiple values (from proxy x-forwarded-for: "client, proxy1, proxy2"), take the client IP
-  const cleanIp = ip.split(",")[0].trim();
 
   try {
     const res = await fetch(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city,isp,lat,lon,proxy,hosting`);

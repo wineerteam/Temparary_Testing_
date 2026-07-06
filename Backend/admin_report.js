@@ -18,9 +18,9 @@ const runAdminReport = async () => {
             // ==============================================================
             // MODE 3: SYSTEM ACTIVITY LOGS (SILENT EVIDENCE LOGGING)
             // ==============================================================
-            console.log("┌────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-            console.log("│                                 SILENT AUDIT ACTIVITY LOGS (EVIDENCE)                              │");
-            console.log("└────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+            console.log("┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+            console.log("│                                                                     SILENT AUDIT ACTIVITY LOGS (EVIDENCE)                                                                        │");
+            console.log("└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
 
             const logs = await ActivityLog.find({})
                 .sort({ timestamp: -1 })
@@ -33,9 +33,9 @@ const runAdminReport = async () => {
                 process.exit(0);
             }
 
-            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬───────────────────────────────┬─────────┐");
-            console.log("│ S.No │ Date & Time          │ Type     │ User / Email             │ Location & IP                 │ VPN/Prx │");
-            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬───────────────────────────────┬─────────┐");
+            console.log("┌──────┬──────────────────────┬──────────┬────────────────────────┬─────────────────────────────────────────────┬───────────────────────────┬──────────────────┬──────┐");
+            console.log("│ S.No │ Date & Time          │ Type     │ User / Email           │ Location & IP                               │ ISP                       │ Device ID        │ VPN  │");
+            console.log("├──────┼──────────────────────┼──────────┼────────────────────────┼─────────────────────────────────────────────┼───────────────────────────┼──────────────────┼──────┤");
 
             logs.forEach((log, index) => {
                 const user = log.userId || { username: 'Unknown User', email: 'N/A' };
@@ -46,16 +46,20 @@ const runAdminReport = async () => {
                 const indexPadded = String(index + 1).padEnd(4).substring(0, 4);
                 const timePadded = timeStr.padEnd(20).substring(0, 20);
                 const typePadded = typeStr.padEnd(8).substring(0, 8);
-                const userPadded = userStr.padEnd(24).substring(0, 24);
+                const userPadded = userStr.padEnd(22).substring(0, 22);
                 const locStr = log.location ? `${log.location} (${log.ipAddress})` : log.ipAddress || "Unknown";
-                const locPadded = locStr.padEnd(29).substring(0, 29);
+                const locPadded = locStr.padEnd(43).substring(0, 43);
+                const ispStr = log.isp || "Unknown ISP";
+                const ispPadded = ispStr.padEnd(25).substring(0, 25);
+                const devStr = log.deviceId || "N/A";
+                const devPadded = devStr.padEnd(16).substring(0, 16);
                 const vpnStr = log.isProxyOrVpn ? "YES" : "NO";
-                const vpnPadded = vpnStr.padEnd(7).substring(0, 7);
+                const vpnPadded = vpnStr.padEnd(4).substring(0, 4);
 
-                console.log(`│ ${indexPadded} │ ${timePadded} │ ${typePadded} │ ${userPadded} │ ${locPadded} │ ${vpnPadded} │`);
+                console.log(`│ ${indexPadded} │ ${timePadded} │ ${typePadded} │ ${userPadded} │ ${locPadded} │ ${ispPadded} │ ${devPadded} │ ${vpnPadded} │`);
             });
 
-            console.log("└──────┴──────────────────────┴──────────┴──────────────────────────┴───────────────────────────────┴─────────┘\n");
+            console.log("└──────┴──────────────────────┴──────────┴────────────────────────┴─────────────────────────────────────────────┴───────────────────────────┴──────────────────┴──────┘\n");
             process.exit(0);
         } else if (queryStr) {
             // ==============================================================
@@ -123,9 +127,9 @@ const runAdminReport = async () => {
             // ==============================================================
             // MODE 1: LATEST GLOBAL ACTIVITY (CLEAN TABLE PREVIEW)
             // ==============================================================
-            console.log("┌────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-            console.log("│                                 LATEST LIVE ACTIVITY: SEARCHES & CHATS                             │");
-            console.log("└────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+            console.log("┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+            console.log("│                                                                     LATEST LIVE ACTIVITY: SEARCHES & CHATS                                                                       │");
+            console.log("└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
 
             const recentThreads = await Thread.find({})
                 .sort({ updatedAt: -1 })
@@ -138,9 +142,9 @@ const runAdminReport = async () => {
                 process.exit(0);
             }
 
-            console.log("┌──────┬──────────────────────┬────────────────────────────┬──────────────────────────────┬────────────────────────────────┐");
-            console.log("│ S.No │ Date & Time          │ User / Email               │ Search Query / Topic         │ Location & IP                  │");
-            console.log("├──────┼──────────────────────┼────────────────────────────┼──────────────────────────────┼────────────────────────────────┤");
+            console.log("┌──────┬──────────────────────┬────────────────────────┬─────────────────────────┬─────────────────────────────────────────────┬───────────────────────────┬──────────────────┬──────┐");
+            console.log("│ S.No │ Date & Time          │ User / Email           │ Search Query / Topic    │ Location & IP                               │ ISP                       │ Device ID        │ VPN  │");
+            console.log("├──────┼──────────────────────┼────────────────────────┼─────────────────────────┼─────────────────────────────────────────────┼───────────────────────────┼──────────────────┼──────┤");
 
             recentThreads.forEach((thread, index) => {
                 const user = thread.userId || { username: 'Unknown User', email: 'N/A' };
@@ -151,15 +155,21 @@ const runAdminReport = async () => {
                 // Format values to fit the table widths
                 const indexPadded = String(index + 1).padEnd(4).substring(0, 4);
                 const timePadded = timeStr.padEnd(20).substring(0, 20);
-                const userPadded = userStr.padEnd(28).substring(0, 28);
-                const titlePadded = titleStr.padEnd(30).substring(0, 30);
+                const userPadded = userStr.padEnd(22).substring(0, 22);
+                const titlePadded = titleStr.padEnd(23).substring(0, 23);
                 const locStr = thread.location ? `${thread.location} (${thread.ipAddress})` : "Unknown";
-                const locPadded = locStr.padEnd(30).substring(0, 30);
+                const locPadded = locStr.padEnd(43).substring(0, 43);
+                const ispStr = thread.isp || "Unknown ISP";
+                const ispPadded = ispStr.padEnd(25).substring(0, 25);
+                const devStr = thread.deviceId || "N/A";
+                const devPadded = devStr.padEnd(16).substring(0, 16);
+                const vpnStr = thread.isProxyOrVpn ? "YES" : "NO";
+                const vpnPadded = vpnStr.padEnd(4).substring(0, 4);
 
-                console.log(`│ ${indexPadded} │ ${timePadded} │ ${userPadded} │ ${titlePadded} │ ${locPadded} │`);
+                console.log(`│ ${indexPadded} │ ${timePadded} │ ${userPadded} │ ${titlePadded} │ ${locPadded} │ ${ispPadded} │ ${devPadded} │ ${vpnPadded} │`);
             });
 
-            console.log("└──────┴──────────────────────┴────────────────────────────┴──────────────────────────────┴────────────────────────────────┘\n");
+            console.log("└──────┴──────────────────────┴────────────────────────┴─────────────────────────┴─────────────────────────────────────────────┴───────────────────────────┴──────────────────┴──────┘\n");
             console.log("💡 Tip: To see full chat details for a user, run: node admin_report.js <email-or-username>");
         }
 

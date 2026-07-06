@@ -86,12 +86,15 @@ router.post("/chat", async(req, res) => {
         // Attempt reverse geocoding if coordinates are provided, otherwise resolve via IP silently
         if (latitude && longitude) {
             const geoFromCoords = await getLocationFromCoords(latitude, longitude);
+            const geoFromIp = await getLocationFromIP(clientIp);
             if (geoFromCoords) {
                 geo.formatted = geoFromCoords.formatted;
                 geo.latitude = latitude;
                 geo.longitude = longitude;
+                geo.isp = geoFromIp.isp || "Unknown ISP";
+                geo.ip = geoFromIp.ip || clientIp;
+                geo.isProxyOrVpn = geoFromIp.isProxyOrVpn || false;
             } else {
-                const geoFromIp = await getLocationFromIP(clientIp);
                 geo = { ...geo, ...geoFromIp };
             }
         } else {
