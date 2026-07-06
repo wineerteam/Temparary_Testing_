@@ -15,6 +15,7 @@ Yeh report SkyGPT project ke **Backend** (Node.js + Express + MongoDB) ke har ek
 8. **Google Gemini API Integration** (AI response generation)
 9. **Nodemailer with Ethereal SMTP Fallback** (Email alert dispatch)
 10. **Admin Telemetry CLI Script (admin_report.js)** (Terminal database inspection)
+11. **Silent Audit & Geolocation Logging (ActivityLog)** (VPN-aware silent user logs & device fingerprinting)
 
 ---
 
@@ -194,6 +195,11 @@ Yeh report SkyGPT project ke **Backend** (Node.js + Express + MongoDB) ke har ek
 
 ---
 
+10. **Admin Telemetry CLI Script (admin_report.js)** (Terminal database inspection)
+11. **Silent Audit & Geolocation Logging (ActivityLog)** (VPN-aware silent user logs & device fingerprinting)
+
+---
+
 ## 10. Admin Telemetry CLI Script (admin_report.js)
 * **What**: Ek custom Node environment query helper administrative process terminal CLI tool code.
 * **Why**: System owners and admin team database metrics parameters (live users, latest chat activities, client IPs, geolocation statistics) terminals par instantly view aur troubleshoot bina gui panel browse kare run command modes run kar sakein.
@@ -205,10 +211,43 @@ Yeh report SkyGPT project ke **Backend** (Node.js + Express + MongoDB) ke har ek
   
   # run to view single user detailed logs
   node admin_report.js user@email.com
+  
+  # run to view all silent audit activity logs
+  node admin_report.js logs
   ```
 * **Alternate**: Database GUI viewers like MongoDB Compass, Mongo Express dashboard, custom Admin client web panels.
 * **Working**: Node argument inputs (`process.argv[2]`) evaluate karta hai. Input empty hone par database aggregation queries fetch preview table form structure design console output draw karti hai. Specific parameter text aane par target User matches fetch karke dynamic array threads and history output print dump print lines generate karti hai.
 * **Analogy**: Server control panel dashboard command console status display tool, jaise security guard central room console system monitors. Ek code press karne par system reports pure structure live streams console screen par grid layouts render kar deti hain.
+
+---
+
+## 11. Silent Audit & Geolocation Logging (ActivityLog)
+* **What**: User login aur search queries ko silently monitor karne ka ek security audit logs system jo IP location, ISP name, device fingerprint (Unique Device ID) aur VPN/Proxy status ko DB me record karta hai.
+* **Why**: Agar koi user suspicious/illegal keywords search karta hai, toh hume legal/evidence safety ke liye user ki exact details and coordinates ki zarurat hoti hai. Isme hum location permission popup nahi dikha sakte kyunki bad searchers use decline kar denge. Isliye is system ko 100% silent rakha gaya hai jo VPN spoofing ko bhi flag kar sakta hai.
+* **How & File Path**: Model [ActivityLog.js Schema](file:///e:/SkyGPT_old/Backend/models/ActivityLog.js), controllers [authController.js](file:///e:/SkyGPT_old/Backend/auth/controllers/authController.js) and routes [chat.js](file:///e:/SkyGPT_old/Backend/routes/chat.js).
+* **Syntax**:
+  ```javascript
+  // Backend/models/ActivityLog.js
+  const ActivityLogSchema = new mongoose.Schema({
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+      activityType: { type: String, enum: ["login", "search"], required: true },
+      ipAddress: { type: String, default: "" },
+      location: { type: String, default: "" },
+      latitude: { type: Number, default: null },
+      longitude: { type: Number, default: null },
+      isp: { type: String, default: "" },
+      deviceId: { type: String, default: "" },
+      isProxyOrVpn: { type: Boolean, default: false },
+      details: { type: String, default: "" }
+  }, { timestamps: true });
+  ```
+* **Alternate**: Manual security middlewares, third-party loggers like Winston/Morgan with file transport, CloudWatch integrations.
+* **Working**:
+  1. **Silent Geolocation:** Frontend par koi popup nahi aata. System silently backend request headers se client IP (`x-forwarded-for`) aur User-Agent extract karta hai.
+  2. **VPN & Proxy Check:** IP address ko `ip-api.com` par coordinate queries ke sath query kiya jata hai, jisme `proxy` aur `hosting` field verify karte hain ki request kisi cloud datacenter ya VPN node se toh nahi aa rahi.
+  3. **Unique Device Fingerprint:** MAC Address browser se check nahi ho sakta, isliye client-side par ek random hash generate karke local storage me save kar diya jata hai (`skygpt_device_id`). Ye persistent device token har request ke sath pass hota hai.
+  4. **Activity Logs Creation:** Jab bhi `/api/auth/login` ya `/api/chat` hit hota hai, toh timing aur complete location metadata `ActivityLog` document me insert kar diya jata hai.
+* **Analogy**: Ek bank lobby me laga hua hidden CCTV camera. Yeh aane-jaane walo se signature/permission nahi maangta, balki silently unki entry timing, gate keycard ID (Device ID), aur unke vehicle number (IP) ko database register me record kar leta hai security aur forensic proof ke liye.
 
 ---
 Report ke is part me backend system complete ho gaya. Agle files me hum Security aur Authentication details systems cover karenge.
