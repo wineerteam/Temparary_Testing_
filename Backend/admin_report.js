@@ -11,6 +11,14 @@ const getShortLoc = (locationStr, ip) => {
     if (!locationStr || locationStr === "Unknown" || locationStr === "Unknown Location") {
         return ip || "Unknown";
     }
+    // Check if there is an IP location override (e.g. "Dankaur... [IP: Meerut...]")
+    if (locationStr.includes("[IP:")) {
+        const parts = locationStr.split("[IP:");
+        const gpsPart = parts[0].split(",")[0].trim();
+        const ipPart = parts[1].replace("]", "").split(",")[0].trim();
+        const shortLoc = `${gpsPart} (IP: ${ipPart})`;
+        return ip ? `${shortLoc} (${ip})` : shortLoc;
+    }
     // Take first segment (typically City, Town, or Village)
     const city = locationStr.split(",")[0].trim();
     return ip ? `${city} (${ip})` : city;
@@ -43,9 +51,9 @@ const runAdminReport = async () => {
                 process.exit(0);
             }
 
-            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬────────────────────────────────┬──────┐");
-            console.log("│ S.No │ Date & Time          │ Type     │ User / Email             │ Location & IP                  │ VPN  │");
-            console.log("├──────┼──────────────────────┼──────────┼──────────────────────────┼────────────────────────────────┼──────┤");
+            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬─────────────────────────────────────────────┬──────┐");
+            console.log("│ S.No │ Date & Time          │ Type     │ User / Email             │ Location & IP                               │ VPN  │");
+            console.log("├──────┼──────────────────────┼──────────┼──────────────────────────┼─────────────────────────────────────────────┼──────┤");
 
             logs.forEach((log, index) => {
                 const user = log.userId || { username: 'Unknown User', email: 'N/A' };
@@ -58,14 +66,14 @@ const runAdminReport = async () => {
                 const typePadded = typeStr.padEnd(8).substring(0, 8);
                 const userPadded = userStr.padEnd(24).substring(0, 24);
                 const locStr = getShortLoc(log.location, log.ipAddress);
-                const locPadded = locStr.padEnd(30).substring(0, 30);
+                const locPadded = locStr.padEnd(43).substring(0, 43);
                 const vpnStr = log.isProxyOrVpn ? "YES" : "NO";
                 const vpnPadded = vpnStr.padEnd(4).substring(0, 4);
 
                 console.log(`│ ${indexPadded} │ ${timePadded} │ ${typePadded} │ ${userPadded} │ ${locPadded} │ ${vpnPadded} │`);
             });
 
-            console.log("└──────┴──────────────────────┴──────────┴──────────────────────────┴────────────────────────────────┴──────┘\n");
+            console.log("└──────┴──────────────────────┴──────────┴──────────────────────────┴─────────────────────────────────────────────┴──────┘\n");
             process.exit(0);
         } else if (queryStr) {
             // ==============================================================
@@ -170,9 +178,9 @@ const runAdminReport = async () => {
                 process.exit(0);
             }
 
-            console.log("┌──────┬──────────────────────┬────────────────────────────┬──────────────────────────────┬────────────────────────────────┐");
-            console.log("│ S.No │ Date & Time          │ User / Email               │ Search Query / Topic         │ Location & IP                  │");
-            console.log("├──────┼──────────────────────┼────────────────────────────┼──────────────────────────────┼────────────────────────────────┤");
+            console.log("┌──────┬──────────────────────┬────────────────────────────┬──────────────────────────────┬─────────────────────────────────────────────┐");
+            console.log("│ S.No │ Date & Time          │ User / Email               │ Search Query / Topic         │ Location & IP                               │");
+            console.log("├──────┼──────────────────────┼────────────────────────────┼──────────────────────────────┼─────────────────────────────────────────────┤");
 
             recentThreads.forEach((thread, index) => {
                 const user = thread.userId || { username: 'Unknown User', email: 'N/A' };
@@ -186,12 +194,12 @@ const runAdminReport = async () => {
                 const userPadded = userStr.padEnd(26).substring(0, 26);
                 const titlePadded = titleStr.padEnd(28).substring(0, 28);
                 const locStr = getShortLoc(thread.location, thread.ipAddress);
-                const locPadded = locStr.padEnd(30).substring(0, 30);
+                const locPadded = locStr.padEnd(43).substring(0, 43);
 
                 console.log(`│ ${indexPadded} │ ${timePadded} │ ${userPadded} │ ${titlePadded} │ ${locPadded} │`);
             });
 
-            console.log("└──────┴──────────────────────┴────────────────────────────┴──────────────────────────────┴────────────────────────────────┘\n");
+            console.log("└──────┴──────────────────────┴────────────────────────────┴──────────────────────────────┴─────────────────────────────────────────────┘\n");
             console.log("💡 Tip: To see full chat details for a user, run: node admin_report.js <email-or-username>");
         }
 

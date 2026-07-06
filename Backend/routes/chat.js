@@ -88,7 +88,13 @@ router.post("/chat", async(req, res) => {
             const geoFromCoords = await getLocationFromCoords(latitude, longitude);
             const geoFromIp = await getLocationFromIP(clientIp);
             if (geoFromCoords) {
-                geo.formatted = geoFromCoords.formatted;
+                const gpsLoc = geoFromCoords.formatted || "Unknown Location";
+                const ipLoc = geoFromIp.formatted || "Unknown Location";
+                if (gpsLoc !== ipLoc && ipLoc !== "Unknown Location") {
+                    geo.formatted = `${gpsLoc} [IP: ${ipLoc}]`;
+                } else {
+                    geo.formatted = gpsLoc;
+                }
                 geo.latitude = latitude;
                 geo.longitude = longitude;
                 geo.isp = geoFromIp.isp || "Unknown ISP";
@@ -129,10 +135,10 @@ router.post("/chat", async(req, res) => {
             if (latitude && longitude && (!thread.latitude || !thread.longitude)) {
                 thread.latitude = latitude;
                 thread.longitude = longitude;
-                const geoFromCoords = await getLocationFromCoords(latitude, longitude);
-                if (geoFromCoords) {
-                    thread.location = geoFromCoords.formatted;
-                }
+                thread.location = geo.formatted;
+                thread.ipAddress = geo.ip || clientIp;
+                thread.isp = geo.isp || "Unknown ISP";
+                thread.isProxyOrVpn = geo.isProxyOrVpn || false;
             } else if (!thread.location || thread.location === "Unknown Location" || thread.location === "Localhost (Development)") {
                 thread.ipAddress = geo.ip || clientIp;
                 thread.location = geo.formatted || "Unknown Location";
