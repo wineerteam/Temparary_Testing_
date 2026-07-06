@@ -48,6 +48,22 @@ const ThreadSchema = new mongoose.Schema({
         type: String,
         default: ""
     },
+    latitude: {
+        type: Number,
+        default: null
+    },
+    longitude: {
+        type: Number,
+        default: null
+    },
+    deviceId: {
+        type: String,
+        default: ""
+    },
+    isProxyOrVpn: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now

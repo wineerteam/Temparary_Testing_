@@ -1,7 +1,8 @@
 import express from "express";
 import Thread from "../models/Thread.js";
+import ActivityLog from "../models/ActivityLog.js";
 import getGeminiAPIResponse from "../utils/gemini.js";
-import { getLocationFromIP } from "../utils/geo.js";
+import { getLocationFromIP, getLocationFromCoords } from "../utils/geo.js";
 
 const router = express.Router();
 
@@ -69,7 +70,7 @@ router.delete("/thread/:threadId", async (req, res) => {
 });
 
 router.post("/chat", async(req, res) => {
-    const {threadId, message} = req.body;
+    const {threadId, message, latitude, longitude, deviceId} = req.body;
 
     if(!threadId || !message) {
         return res.status(400).json({error: "missing required fields"});
@@ -77,13 +78,29 @@ router.post("/chat", async(req, res) => {
 
     try {
         let thread = await Thread.findOne({threadId, userId: req.user.id});
+        const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+        const userAgent = req.headers["user-agent"] || "";
+
+        let geo = { ip: clientIp, formatted: "Unknown Location", isp: "Unknown ISP", latitude: null, longitude: null, isProxyOrVpn: false };
+
+        // Attempt reverse geocoding if coordinates are provided, otherwise resolve via IP silently
+        if (latitude && longitude) {
+            const geoFromCoords = await getLocationFromCoords(latitude, longitude);
+            if (geoFromCoords) {
+                geo.formatted = geoFromCoords.formatted;
+                geo.latitude = latitude;
+                geo.longitude = longitude;
+            } else {
+                const geoFromIp = await getLocationFromIP(clientIp);
+                geo = { ...geo, ...geoFromIp };
+            }
+        } else {
+            const geoFromIp = await getLocationFromIP(clientIp);
+            geo = { ...geo, ...geoFromIp };
+        }
 
         if(!thread) {
-            const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-            const userAgent = req.headers["user-agent"] || "";
-            const geo = await getLocationFromIP(clientIp);
-
-            //create a new thread in Db
+            // Create a new thread in DB
             thread = new Thread({
                 threadId,
                 userId: req.user.id,
@@ -92,20 +109,53 @@ router.post("/chat", async(req, res) => {
                 ipAddress: geo.ip || clientIp,
                 location: geo.formatted || "Unknown Location",
                 isp: geo.isp || "Unknown ISP",
-                userAgent: userAgent
+                userAgent: userAgent,
+                latitude: geo.latitude,
+                longitude: geo.longitude,
+                deviceId: deviceId || "",
+                isProxyOrVpn: geo.isProxyOrVpn || false
             });
         } else {
             thread.messages.push({role: "user", content: message});
-            if (!thread.ipAddress) {
-                const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-                const userAgent = req.headers["user-agent"] || "";
-                const geo = await getLocationFromIP(clientIp);
+            
+            // Update deviceId and geo details if not already set
+            if (deviceId && !thread.deviceId) {
+                thread.deviceId = deviceId;
+            }
+
+            if (latitude && longitude && (!thread.latitude || !thread.longitude)) {
+                thread.latitude = latitude;
+                thread.longitude = longitude;
+                const geoFromCoords = await getLocationFromCoords(latitude, longitude);
+                if (geoFromCoords) {
+                    thread.location = geoFromCoords.formatted;
+                }
+            } else if (!thread.location || thread.location === "Unknown Location" || thread.location === "Localhost (Development)") {
                 thread.ipAddress = geo.ip || clientIp;
                 thread.location = geo.formatted || "Unknown Location";
                 thread.isp = geo.isp || "Unknown ISP";
+                thread.latitude = geo.latitude;
+                thread.longitude = geo.longitude;
+                thread.isProxyOrVpn = geo.isProxyOrVpn || false;
                 thread.userAgent = userAgent;
             }
         }
+
+        // Save audit activity log silently in DB for evidence
+        const activityLog = new ActivityLog({
+            userId: req.user.id,
+            activityType: "search",
+            ipAddress: geo.ip || clientIp,
+            location: geo.formatted || "Unknown Location",
+            latitude: geo.latitude,
+            longitude: geo.longitude,
+            isp: geo.isp || "Unknown ISP",
+            userAgent: userAgent,
+            deviceId: deviceId || "",
+            isProxyOrVpn: geo.isProxyOrVpn || false,
+            details: `Search Query: ${message}`
+        });
+        await activityLog.save();
 
         const assistantReply = await getGeminiAPIResponse(message);
 

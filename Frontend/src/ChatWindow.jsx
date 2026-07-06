@@ -16,7 +16,37 @@ function ChatWindow() {
         setLoading(true);
         setNewChat(false);
 
-        console.log("message ", prompt, " threadId ", currThreadId);
+        // Get or generate persistent unique device identifier (safe browser fingerprinting)
+        let deviceId = localStorage.getItem("skygpt_device_id");
+        if (!deviceId) {
+            deviceId = "dev-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now();
+            localStorage.setItem("skygpt_device_id", deviceId);
+        }
+
+        let latitude = null;
+        let longitude = null;
+
+        // Try getting exact GPS coordinates silently ONLY if permission is already granted (avoids popup)
+        if (navigator.permissions && navigator.geolocation) {
+            try {
+                const perm = await navigator.permissions.query({ name: "geolocation" });
+                if (perm.state === "granted") {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 3000,
+                            maximumAge: 0
+                        });
+                    });
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                }
+            } catch (geoError) {
+                console.warn("Silent coordinates check failed:", geoError.message);
+            }
+        }
+
+        console.log("message ", prompt, " threadId ", currThreadId, " coords ", { latitude, longitude }, " deviceId ", deviceId);
         const options = {
             method: "POST",
             headers: {
@@ -25,7 +55,10 @@ function ChatWindow() {
             credentials: "include",
             body: JSON.stringify({
                 message: prompt,
-                threadId: currThreadId
+                threadId: currThreadId,
+                latitude,
+                longitude,
+                deviceId
             })
         };
 
@@ -56,6 +89,8 @@ function ChatWindow() {
 
         setPrompt("");
     }, [reply]);
+
+
 
 
     const handleProfileClick = () => {

@@ -10,25 +10,35 @@ const handleResponse = async (response) => {
 
 export const authApi = {
   async register(username, email, password, confirmPassword) {
+    let deviceId = localStorage.getItem("skygpt_device_id");
+    if (!deviceId) {
+      deviceId = "dev-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now();
+      localStorage.setItem("skygpt_device_id", deviceId);
+    }
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ username, email, password, confirmPassword }),
+      body: JSON.stringify({ username, email, password, confirmPassword, deviceId }),
     });
     return handleResponse(response);
   },
 
   async login(usernameOrEmail, password) {
+    let deviceId = localStorage.getItem("skygpt_device_id");
+    if (!deviceId) {
+      deviceId = "dev-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now();
+      localStorage.setItem("skygpt_device_id", deviceId);
+    }
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ usernameOrEmail, password }),
+      body: JSON.stringify({ usernameOrEmail, password, deviceId }),
     });
     return handleResponse(response);
   },

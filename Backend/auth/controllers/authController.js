@@ -10,6 +10,8 @@ import {
 import { handleGoogleAuth, handleGithubAuth } from "../services/authService.js";
 import jwt from "jsonwebtoken";
 import { sendEmail } from "../../utils/emailService.js";
+import ActivityLog from "../../models/ActivityLog.js";
+import { getLocationFromIP } from "../../utils/geo.js";
 
 // Helper to set HttpOnly cookies
 const setTokenCookies = (res, accessToken, refreshToken) => {
@@ -27,7 +29,7 @@ export const register = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { username, email, password } = req.body;
+  const { username, email, password, deviceId } = req.body;
 
   try {
     // Check if user exists by email or username
@@ -60,6 +62,26 @@ export const register = async (req, res) => {
 
     setTokenCookies(res, accessToken, refreshToken);
 
+    // Silently log registration activity
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"] || "";
+    const geo = await getLocationFromIP(clientIp);
+
+    const activityLog = new ActivityLog({
+      userId: savedUser._id,
+      activityType: "login",
+      ipAddress: geo.ip || clientIp,
+      location: geo.formatted || "Unknown Location",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      isp: geo.isp || "Unknown ISP",
+      userAgent: userAgent,
+      deviceId: deviceId || "",
+      isProxyOrVpn: geo.isProxyOrVpn || false,
+      details: "Registered new local user and logged in"
+    });
+    await activityLog.save();
+
     return res.status(201).json({
       success: true,
       user: {
@@ -85,7 +107,7 @@ export const login = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { usernameOrEmail, password } = req.body;
+  const { usernameOrEmail, password, deviceId } = req.body;
 
   try {
     // Find user by username or email
@@ -120,6 +142,26 @@ export const login = async (req, res) => {
 
     user.lastLogin = new Date();
     await user.save();
+
+    // Silently log login activity
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"] || "";
+    const geo = await getLocationFromIP(clientIp);
+
+    const activityLog = new ActivityLog({
+      userId: user._id,
+      activityType: "login",
+      ipAddress: geo.ip || clientIp,
+      location: geo.formatted || "Unknown Location",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      isp: geo.isp || "Unknown ISP",
+      userAgent: userAgent,
+      deviceId: deviceId || "",
+      isProxyOrVpn: geo.isProxyOrVpn || false,
+      details: "Login via local credentials"
+    });
+    await activityLog.save();
 
     return res.json({
       success: true,
@@ -331,6 +373,26 @@ export const googleCallback = async (req, res) => {
 
     setTokenCookies(res, accessToken, refreshToken);
 
+    // Silently log OAuth login
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"] || "";
+    const geo = await getLocationFromIP(clientIp);
+
+    const activityLog = new ActivityLog({
+      userId: user._id,
+      activityType: "login",
+      ipAddress: geo.ip || clientIp,
+      location: geo.formatted || "Unknown Location",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      isp: geo.isp || "Unknown ISP",
+      userAgent: userAgent,
+      deviceId: "", // OAuth redirect doesn't carry request body
+      isProxyOrVpn: geo.isProxyOrVpn || false,
+      details: "Login via Google OAuth callback"
+    });
+    await activityLog.save();
+
     // Redirect back to frontend dashboard
     return res.redirect(`${authConfig.frontendUrl}/`);
   } catch (error) {
@@ -372,6 +434,26 @@ export const githubCallback = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     setTokenCookies(res, accessToken, refreshToken);
+
+    // Silently log OAuth login
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const userAgent = req.headers["user-agent"] || "";
+    const geo = await getLocationFromIP(clientIp);
+
+    const activityLog = new ActivityLog({
+      userId: user._id,
+      activityType: "login",
+      ipAddress: geo.ip || clientIp,
+      location: geo.formatted || "Unknown Location",
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      isp: geo.isp || "Unknown ISP",
+      userAgent: userAgent,
+      deviceId: "", // OAuth redirect doesn't carry request body
+      isProxyOrVpn: geo.isProxyOrVpn || false,
+      details: "Login via GitHub OAuth callback"
+    });
+    await activityLog.save();
 
     // Redirect back to frontend dashboard
     return res.redirect(`${authConfig.frontendUrl}/`);

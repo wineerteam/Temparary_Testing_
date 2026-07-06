@@ -4,6 +4,7 @@ import dns from "dns";
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 import User from "./models/User.js";
 import Thread from "./models/Thread.js";
+import ActivityLog from "./models/ActivityLog.js";
 
 const runAdminReport = async () => {
     try {
@@ -13,7 +14,50 @@ const runAdminReport = async () => {
 
         const queryStr = process.argv[2]; // Get argument passed from terminal
 
-        if (queryStr) {
+        if (queryStr === "logs") {
+            // ==============================================================
+            // MODE 3: SYSTEM ACTIVITY LOGS (SILENT EVIDENCE LOGGING)
+            // ==============================================================
+            console.log("┌────────────────────────────────────────────────────────────────────────────────────────────────────┐");
+            console.log("│                                 SILENT AUDIT ACTIVITY LOGS (EVIDENCE)                              │");
+            console.log("└────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+
+            const logs = await ActivityLog.find({})
+                .sort({ timestamp: -1 })
+                .limit(30)
+                .populate('userId', 'username email')
+                .lean();
+
+            if (logs.length === 0) {
+                console.log("No activity logs found in the database yet.");
+                process.exit(0);
+            }
+
+            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬───────────────────────────────┬─────────┐");
+            console.log("│ S.No │ Date & Time          │ Type     │ User / Email             │ Location & IP                 │ VPN/Prx │");
+            console.log("┌──────┬──────────────────────┬──────────┬──────────────────────────┬───────────────────────────────┬─────────┐");
+
+            logs.forEach((log, index) => {
+                const user = log.userId || { username: 'Unknown User', email: 'N/A' };
+                const userStr = user.email !== 'N/A' ? `${user.username} (${user.email})` : user.username;
+                const timeStr = new Date(log.timestamp).toLocaleString();
+                const typeStr = log.activityType.toUpperCase();
+                
+                const indexPadded = String(index + 1).padEnd(4).substring(0, 4);
+                const timePadded = timeStr.padEnd(20).substring(0, 20);
+                const typePadded = typeStr.padEnd(8).substring(0, 8);
+                const userPadded = userStr.padEnd(24).substring(0, 24);
+                const locStr = log.location ? `${log.location} (${log.ipAddress})` : log.ipAddress || "Unknown";
+                const locPadded = locStr.padEnd(29).substring(0, 29);
+                const vpnStr = log.isProxyOrVpn ? "YES" : "NO";
+                const vpnPadded = vpnStr.padEnd(7).substring(0, 7);
+
+                console.log(`│ ${indexPadded} │ ${timePadded} │ ${typePadded} │ ${userPadded} │ ${locPadded} │ ${vpnPadded} │`);
+            });
+
+            console.log("└──────┴──────────────────────┴──────────┴──────────────────────────┴───────────────────────────────┴─────────┘\n");
+            process.exit(0);
+        } else if (queryStr) {
             // ==============================================================
             // MODE 2: SPECIFIC USER DETAILED REPORT
             // ==============================================================
@@ -49,11 +93,18 @@ const runAdminReport = async () => {
                     if (thread.ipAddress || thread.location) {
                         const locInfo = `${thread.location || "Unknown"} (${thread.ipAddress || "No IP"})`;
                         console.log(`│ LOCATION : ${locInfo.padEnd(84).substring(0, 84)} │`);
+                        if (thread.latitude && thread.longitude) {
+                            const coordsStr = `${thread.latitude}, ${thread.longitude}`;
+                            console.log(`│ GPS COORD: ${coordsStr.padEnd(84).substring(0, 84)} │`);
+                        }
+                        if (thread.deviceId) {
+                            console.log(`│ DEVICE ID: ${thread.deviceId.padEnd(84).substring(0, 84)} │`);
+                        }
                         if (thread.isp) {
                             console.log(`│ ISP      : ${thread.isp.padEnd(84).substring(0, 84)} │`);
                         }
                         if (thread.userAgent) {
-                            console.log(`│ DEVICE   : ${thread.userAgent.padEnd(84).substring(0, 84)} │`);
+                            console.log(`│ BROWSER  : ${thread.userAgent.padEnd(84).substring(0, 84)} │`);
                         }
                     }
                     console.log(`└────────────────────────────────────────────────────────────────────────────────────────────────────┘`);

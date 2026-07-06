@@ -24,7 +24,7 @@ export const getLocationFromIP = async (ip) => {
   const cleanIp = ip.split(",")[0].trim();
 
   try {
-    const res = await fetch(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city,isp`);
+    const res = await fetch(`http://ip-api.com/json/${cleanIp}?fields=status,country,regionName,city,isp,lat,lon,proxy,hosting`);
     const data = await res.json();
 
     if (data && data.status === "success") {
@@ -35,21 +35,88 @@ export const getLocationFromIP = async (ip) => {
         region: data.regionName,
         country: data.country,
         formatted: parts.join(", "),
-        isp: data.isp || "Unknown ISP"
+        isp: data.isp || "Unknown ISP",
+        latitude: data.lat || null,
+        longitude: data.lon || null,
+        isProxyOrVpn: data.proxy || data.hosting || false
       };
     }
     
     return {
       ip: cleanIp,
       formatted: "Unknown Location",
-      isp: "Unknown ISP"
+      isp: "Unknown ISP",
+      latitude: null,
+      longitude: null,
+      isProxyOrVpn: false
     };
   } catch (error) {
     console.error("IP Geolocation failed:", error.message);
     return {
       ip: cleanIp,
       formatted: "Lookup Error",
-      isp: "Unknown ISP"
+      isp: "Unknown ISP",
+      latitude: null,
+      longitude: null,
+      isProxyOrVpn: false
     };
   }
 };
+
+/**
+ * Gets location details from exact GPS coordinates (latitude, longitude) using OpenStreetMap's Nominatim reverse geocoding.
+ * Useful when the user is on a VPN or when precise village-level location is required.
+ * @param {number} latitude - Latitude
+ * @param {number} longitude - Longitude
+ * @returns {Promise<Object|null>} Geolocation info object or null
+ */
+export const getLocationFromCoords = async (latitude, longitude) => {
+  if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+    return null;
+  }
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
+    
+    // OpenStreetMap Nominatim requires a valid and descriptive User-Agent
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "SkyGPT/2.0 (LocationTracker; contact: admin@skygpt.com)"
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error(`OSM Nominatim API returned status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (data && data.address) {
+      const addr = data.address;
+      
+      // Prioritize village name, town, hamlet, or suburb for accurate local naming
+      const localArea = addr.village || addr.town || addr.hamlet || addr.suburb || addr.neighbourhood || addr.city_district || addr.road || "";
+      const city = addr.city || addr.municipality || addr.county || "";
+      const state = addr.state || addr.region || "";
+      const country = addr.country || "";
+
+      const parts = [];
+      if (localArea) parts.push(localArea);
+      if (city && city !== localArea) parts.push(city);
+      if (state) parts.push(state);
+      if (country) parts.push(country);
+
+      return {
+        formatted: parts.filter(Boolean).join(", "),
+        village: addr.village || addr.town || addr.hamlet || "",
+        city: addr.city || "",
+        region: addr.state || "",
+        country: addr.country || ""
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("GPS Reverse Geocoding failed:", error.message);
+    return null;
+  }
+};
+
