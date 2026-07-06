@@ -12,7 +12,7 @@ export const getLocationFromIP = async (ip) => {
   // Normalize local IPs to a real test IP for localhost development testing
   let cleanIp = ip.split(",")[0].trim();
   if (cleanIp === "::1" || cleanIp === "127.0.0.1" || cleanIp.startsWith("::ffff:127.0.0.1") || cleanIp === "::") {
-    cleanIp = "103.88.236.4"; // Real Indian IP (Meerut, UP) for local testing
+    cleanIp = "103.47.75.24"; // Real Indian IP (Dankaur, UP) for local testing
   }
 
   try {
