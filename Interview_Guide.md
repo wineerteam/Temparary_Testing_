@@ -141,6 +141,16 @@ Interviewers aapko phasane ke liye yeh sawal poochh sakte hain. Inhe acche se ya
   > *"Sir, humne forensic analysis ke liye backend me ek alag audit database collection banaya hai jise **`ActivityLog`** kehte hain. Jab bhi koi user login karta hai (local credentials, Google OAuth, ya GitHub OAuth callback se) ya fir koi search search/query query fire karta hai, toh hum silently ek audit doc record karte hain.*
   > * Is log me: `userId`, `activityType` (login/search), exact `timestamp`, client `ipAddress`, `location` (City, State, Country), approx `latitude`/`longitude`, client's network `isp`, `userAgent` (browser details), client's browser `deviceId` (fingerprint), aur `isProxyOrVpn` status. Is logs table ko admin telemetry CLI command `node admin_report.js logs` se dynamic tabular form me terminal par dekha ja sakta hai."*
 
+### Q10: Browser location permission ke liye direct popup trigger karne ke bajaye "Secure Session Verification" modal kyu banaya?
+* **Smart Answer**:
+  > *"Sir, agar browser bina kisi warning ke achanak se location permission maangne lage, toh security conscious users use block kar dete hain. Is psychological behavior ko handle karne ke liye humne ek **Priming UI Modal** ('Secure Session Verification') design kiya.*
+  > *Yeh popup user ko security reasons (jaise account protection ya login verification) se location allow karne ke liye taiyaar karta hai. Jab user 'Verify Session' button click karta hai, tab browser ka location dialog box popup hota hai jisse user ki accept karne ki possibility maximum hoti hai. Agar user deny bhi kar de, toh application bina crash kiye silent IP tracking par fall back kar jati hai."*
+
+### Q11: Kya Gemini AI sach me user ki local location ke hisab se answers deta hai? Isko kaise achieve kiya?
+* **Smart Answer**:
+  > *"Haan sir, ye fully-functional location-aware feature hai jise humne **RAG (Retrieval-Augmented Generation)** ya **Context Injection** ke through achieve kiya hai.*
+  > *Jab user chat window par query send karta hai, toh backend client IP ya GPS coordinates se clean address resolve karta hai. Phir Gemini API hit karne se pehle hum is geographic string ko as a `[System Instruction]` prompt ke top par inject kar dete hain (jaise: 'The user is physically located in Dankaur...'). Is wajah se Gemini user ki direct location identify karke local food joints ya weather ke queries ka sahi answer de pata hai bina dynamic database ko fake kiye."*
+
 ---
 
 Aap is guide ko padh kar interview me project ko fully explain kar sakte hain! All the best!

@@ -250,4 +250,30 @@ Yeh report SkyGPT project ke **Backend** (Node.js + Express + MongoDB) ke har ek
 * **Analogy**: Ek bank lobby me laga hua hidden CCTV camera. Yeh aane-jaane walo se signature/permission nahi maangta, balki silently unki entry timing, gate keycard ID (Device ID), aur unke vehicle number (IP) ko database register me record kar leta hai security aur forensic proof ke liye.
 
 ---
+
+## 12. Location-Aware AI & Dual Geolocation Resolution
+* **What**: Ek advanced backend pipeline jo reverse geocoded coordinates (GPS location) aur raw IP address location (ISP gateway location) dono ko dynamic format me compile karke database logs me save karti hai, aur clean location details ko Gemini AI ke user prompt me inject karti hai.
+* **Why**:
+  1. **Dual Verification:** Agar user VPN ya cellular carrier (like Jio) use kare toh server dynamic IP se dynamic ISP location (`Meerut`) nikal leta hai. Agar GPS allowed hai toh precise local area (`Dankaur`) nikal leta hai. Dono ko log karke (`Dankaur [IP: Meerut]`) save karne se mismatch history check ho sakti hai.
+  2. **Location-Aware AI:** Gemini chatbot user ke aas-paas ki cheezen (weather, food spots, local resources) tabhi search kar payega jab use real-time user location context bypass ke sath milegi.
+* **How & File Path**: [gemini.js](file:///e:/SkyGPT_old/Backend/utils/gemini.js) and [chat.js](file:///e:/SkyGPT_old/Backend/routes/chat.js).
+* **Syntax**:
+  ```javascript
+  // Backend/utils/gemini.js
+  const getGeminiAPIResponse = async (message, locationContext = "") => {
+      let fullPrompt = message;
+      if (locationContext && locationContext !== "Unknown Location") {
+          fullPrompt = `[System Instruction: The user is physically located in or near "${locationContext}". Use this geographical context to answer local queries (e.g. food, weather, internships) accurately.]\\n\\nUser Query: ${message}`;
+      }
+      // fetch options and calls to Gemini model...
+  };
+  ```
+* **Alternate**: Hardcoding location filters on frontend, requesting coordinates for every single search query, using Google Places API on client side.
+* **Working**:
+  1. **Dual Resolution:** Backend `/api/chat` router check karta hai ki coordinates (`latitude`, `longitude`) request body me hain ya nahi. coordinates hone par OSM reverse query chalti hai, aur client IP par dynamic IP-API query chalti hai. Dono different aane par `GPSLocation [IP: IPLocation]` string generate hoti hai.
+  2. **Clean Context Extraction:** Backend prompt generate karne se pehle `[IP:` filter strip karke clean physical location string extract karta hai.
+  3. **Context Injection:** Yeh string as a system instruction metadata block prompt text me append hokar API call dispatch kar deti hai.
+* **Analogy**: Ek dynamic intelligent assistant. Agar aap uske pass jate ho aur pehle se apna visitor ID card validation swipe kar dete ho, toh assistant ko pata chal jata hai aap abhi Dankaur me khade ho. Jab aap poochte ho "Yahan aaspas khana kahan milega?", toh assistant bina dobara pooche wahi ka menu sheet aapke samne rakh deta hai.
+
+---
 Report ke is part me backend system complete ho gaya. Agle files me hum Security aur Authentication details systems cover karenge.

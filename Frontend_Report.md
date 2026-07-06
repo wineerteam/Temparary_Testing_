@@ -191,3 +191,32 @@ Yeh report SkyGPT project ke **Frontend** (React + Vite) ke har ek term, technol
 * **Alternate**: Lottie animations, customized CSS loading animations, standard SVG indicators.
 * **Working**: `loading` boolean state variables (controlled inside `getReply` call) par switch toggle karta hai. Jab logic start hota hai toh dynamic indicator active ho jata hai, aur response success aane par status false karke is animation loader component ko tree se remove kar deta hai.
 * **Analogy**: Jab aap kisi lift me enter karke button press karte hain, toh elevator screen par arrow status update bars up-down hone lagte hain taaki aapko pata chale lift progress me chal rahi hai aur system hang nahi hua hai.
+
+---
+
+## 9. Secure Session Verification Modal & Geolocation Priming
+* **What**: Ek custom glassmorphism modal overlay jo user ko browser location query prompt handle karne se pehle mentally prime aur prepare karta hai.
+* **Why**: Browser ka default alert box "Allow Location" direct aane par user privacy patterns ke chalte click block kar dete hain. Session Hijacking aur security check ka reason use karke custom verification panel frame karne se user location opt-in speed and probability increase ho jati hai.
+* **How & File Path**: Code [ChatWindow.jsx](file:///e:/SkyGPT_old/Frontend/src/ChatWindow.jsx) and Styles [ChatWindow.css](file:///e:/SkyGPT_old/Frontend/src/ChatWindow.css).
+* **Syntax**:
+  ```jsx
+  // Frontend/src/ChatWindow.jsx
+  const [showSecurityPrompt, setShowSecurityPrompt] = useState(false);
+  
+  useEffect(() => {
+      if (navigator.permissions) {
+          navigator.permissions.query({ name: "geolocation" }).then((perm) => {
+              if (perm.state === "prompt") setShowSecurityPrompt(true);
+          });
+      }
+  }, []);
+  ```
+* **Alternate**: Standard direct browser prompts, silent background browser tracking calls, using custom zip code modals.
+* **Working**:
+  1. **Permission Check:** Page mount hone par application checking query `navigator.permissions` check karti hai. Agar value `prompt` (neutral status) hai, toh React state value `showSecurityPrompt` ko `true` set kar deta hai.
+  2. **Security Prompt Overlay:** Centered glassmorphism modal render hota hai with options: `Verify Session` and `Remind Me Later`.
+  3. **Permission Hooking Trigger:** Jab user green verification select karta hai, toh `getCurrentPosition()` fire hota hai. Browser direct window permission alert prompt display karta hai. Ek baar user allow kar deta hai toh permission browser memory me forever saved and whitelisted ho jati hai.
+* **Analogy**: Jaise ek VIP building me security checking gate. Guard directly aapki pockets check karne se pehle pyaar se kehta hai: *"Security protocols ke liye scan machine se pass ho jaiye"*. Aap normal process samajhkar check karwa dete hain aur safely enter ho jate hain.
+
+---
+Report ke is part me frontend system complete ho gaya. Agle files me hum Security aur Authentication details systems cover karenge.

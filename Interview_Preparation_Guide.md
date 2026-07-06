@@ -104,5 +104,11 @@ When the short-lived access token expires, the frontend request will fail. Inste
 ### Q8: What is the purpose of the `admin_report.js` script?
 * **Answer:** "It is an administrative Command Line Interface (CLI) utility. It allows developers or admins with terminal access to inspect live user sessions directly from MongoDB. Running `node admin_report.js` returns a clean ASCII table of the top 20 latest chats, user emails, queries, and geographic locations. Running `node admin_report.js <email>` queries details for that specific user, printing their full profile details along with their complete chat histories and forensics telemetry."
 
+### Q9: Why did you add a "Secure Session Verification" popup instead of just requesting location directly?
+* **Answer:** "Directly prompting a browser location permission dialog out of nowhere often triggers security alarms for users, causing them to deny or block the request. To solve this, I designed a **Psychological Priming Modal** called 'Secure Session Verification'. It frames the connection check as a standard security protocol to prevent unauthorized account hijackings. By clicking 'Verify Session', the user is mentally primed to accept the native browser geolocation popup, which increases the geolocation opt-in rate significantly. If they choose to skip, the system gracefully falls back to silent IP-based tracking."
+
+### Q10: How does your Location-Aware AI (Gemini) integration work? Does the AI actually know where the user is?
+* **Answer:** "Yes, it is a fully functioning Location-Aware AI implemented using **Context Injection (a form of Retrieval-Augmented Generation / RAG)**. When a user queries the chatbot, the backend resolves their geographical coordinates (via GPS or IP-API) and injects this location as a background `[System Instruction]` at the beginning of the prompt sent to Google's Gemini API. This allows the AI to accurately answer local questions (e.g., 'What is my current location?', 'Find food spots near me', or 'Show local internship opportunities') without hardcoding any values."
+
 ---
 This guide covers the core architectural strengths of your project. Read it over to prepare for any technical discussions about your codebase!
